@@ -42,6 +42,13 @@
 *.idb
 *.pdb
 
+# Other files
+*.json
+device
+debug
+build
+*.vscode
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
