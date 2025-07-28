@@ -96,7 +96,13 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
                 
             }
 
-            deviceManagerJson(&pstNewNode);
+            if (true != deviceManagerJson(&pstNewNode))
+            {
+                printf("Cannot Add Device info to json file\n");
+
+                break;
+            }
+
             blCheck = true;
         }
         else
@@ -221,16 +227,16 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
                                 &pstFilePointer))
                 {
                     printf("Unable to write in file\n");
-                    cJSON_free(pcJsonString);
-                    blCheck = true;
                 }
-
-                cJSON_Delete(pstJsonArray);
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
                     printf("Unable to close file\n");
                 }
+
+                cJSON_free(pcJsonString);
+                cJSON_Delete(pstJsonArray);
+                blCheck = true;
 
                 break;
             }
