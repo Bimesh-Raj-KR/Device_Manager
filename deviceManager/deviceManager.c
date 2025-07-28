@@ -222,20 +222,23 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
                 cJSON_AddItemToArray(pstJsonArray, pstJsonObject);
 
                 pcJsonString = cJSON_Print(pstJsonArray);
+                cJSON_Delete(pstJsonArray);
 
                 if (true != fileOperationWrite(pcJsonString, 
                                 &pstFilePointer))
                 {
                     printf("Unable to write in file\n");
+
+                    break;
                 }
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
                     printf("Unable to close file\n");
+
+                    break;
                 }
 
-                cJSON_free(pcJsonString);
-                cJSON_Delete(pstJsonArray);
                 blCheck = true;
 
                 break;

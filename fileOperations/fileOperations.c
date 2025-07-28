@@ -231,6 +231,8 @@ bool fileOperationWrite(int8 *cString,
             {
                 printf("File pointer points to Null\n");
             }
+
+            cJSON_free(cString);
         }
         else
         {
