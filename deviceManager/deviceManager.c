@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Trenser Technology Solutions
 // All Rights Reserved
 //******************************************************************************
-// File    : Device_manager.c
+// File    : deviceManager.c
 // Summary : Manages different devices. Add, delete, search and display devices 
 //           using a json file and linked list
 // Note    : None
@@ -30,24 +30,23 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
 
 //**************************.deviceManagerAdd.**********************************
 // Purpose : Function to Add a Device to list
-// Inputs  : ppstHead - Points to the head node
+// Inputs  : ppstHead - Pointer to the head node
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
-
 bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 {
     bool blCheck = false;
-    int8 cChoice = 'y';
-    int16 nIterator = 0;
+    uint8 ucChoice = 'y';
+    uint16 unIterator = 0;
     DEVICE_MANAGER *pstCurrentNode = NULL;
     DEVICE_MANAGER *pstNewNode = NULL;
     const int8 *pcState[MAX_MENU_COUNT] = {"Online", "Charging", 
                                          "Disabled", "Offline"};
 
-    while (cChoice == 'y')
+    while (ucChoice == 'y')
     {
         pstNewNode = malloc(sizeof(DEVICE_MANAGER));
 
@@ -56,22 +55,21 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
         if (NULL != pstNewNode)
         {
             printf("\nEnter Device Id: ");
-            scanf("%ld", &pstNewNode->lDeviceId);
+            scanf("%ld", &pstNewNode->ulDeviceId);
             printf("\nEnter Vendor Id: ");
-            scanf("%ld", &pstNewNode->lVendorId);
+            scanf("%ld", &pstNewNode->ulVendorId);
             printf("\nEnter Device Name: ");
-            scanf("%s", pstNewNode->Name);
+            scanf("%s", pstNewNode->cName);
             printf("\n**********DEVICE STATE**********\n");
-            for (nIterator = 0; nIterator < MAX_MENU_COUNT; nIterator ++)
+            for (unIterator = 0; unIterator < MAX_MENU_COUNT; unIterator ++)
             {
-                printf("\t%s = %hd\n", pcState[nIterator], nIterator);
+                printf("\t%s = %hd\n", pcState[unIterator], unIterator);
             }
             printf("*********************************\n\n");
             printf("\nEnter Device State: ");
-            scanf("%ld", &pstNewNode->lState);
+            scanf("%hd", &pstNewNode->unState);
 
-            if ((0 > pstNewNode->lState) || 
-                (MAX_MENU_COUNT <= pstNewNode->lState))
+            if (MAX_MENU_COUNT <= pstNewNode->unState)
             {
                 printf("\n\tINVALID DEVICE STATE\n");
                 free(pstNewNode);
@@ -114,9 +112,9 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 
         while(getchar() != '\n');
 
-        scanf("%c", &cChoice);
+        scanf("%c", &ucChoice);
 
-        if (('y' != cChoice) && ('n' != cChoice))
+        if (('y' != ucChoice) && ('n' != ucChoice))
         {
             printf("\tINVALID CHOICE\n");
         }
@@ -127,7 +125,7 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 
 //***************************.deviceManagerJson.********************************
 // Purpose : Function to Add a Device Details to the json File
-// Inputs  : pstCurrentNode - Points to the node currently made in the 
+// Inputs  : pstCurrentNode - Pointer to the node currently made in the 
 //           linked list
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
@@ -137,14 +135,14 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
 {
     bool blCheck = false;
-    int32 lFileSize = 0;
+    uint32 ulFileSize = 0;
     cJSON *pstJsonObject = NULL;
     cJSON *pstJsonArray = NULL;
     FILE *pstFilePointer = NULL;
     int8 *pcJsonString = NULL;
     int8 *pcFileData = NULL;
-    int8 *pcFileName = "device.json";
-    int8 *cMode = "r";
+    int8 *pcFileName = FILE_NAME;
+    int8 *cMode = READ_MODE;
 
     do
     {
@@ -153,26 +151,27 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
             if (true == fileOperationOpen(&pstFilePointer, pcFileName, cMode))
             {
                 if (true != fileOperationGetSize(&pstFilePointer, 0, 
-                                        SEEK_END, &lFileSize))
+                                        SEEK_END, &ulFileSize))
                 {
                     printf("File size could not be determined\n");
 
                     break;
                 }
 
-                pcFileData = malloc(lFileSize + 1);
+                pcFileData = malloc(ulFileSize + 1);
 
                 if(NULL != pcFileData)
                 {
                     if (true != fileOperationRead(pcFileData, 1, 
-                                lFileSize, &pstFilePointer))
+                                ulFileSize, &pstFilePointer))
                     {
                         printf("File Cannot be Read\n");
+                        free(pcFileData);
 
                         break;
                     }
 
-                    pcFileData[lFileSize] = '\0';
+                    pcFileData[ulFileSize] = NULL_CHARACTER;
                     pstJsonArray = cJSON_Parse(pcFileData);
                     free(pcFileData);
                 }
@@ -201,19 +200,19 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
             }
 
             pstFilePointer = NULL;
-            cMode = "w";
+            cMode = WRITE_MODE;
 
             if (true == fileOperationOpen(&pstFilePointer, pcFileName, cMode))
             {
                 pstJsonObject = cJSON_CreateObject();
                 cJSON_AddNumberToObject(pstJsonObject, "Device ID", 
-                    (*pstCurrentNode)->lDeviceId);
+                    (*pstCurrentNode)->ulDeviceId);
                 cJSON_AddNumberToObject(pstJsonObject, "Vendor ID", 
-                    (*pstCurrentNode)->lVendorId);
+                    (*pstCurrentNode)->ulVendorId);
                 cJSON_AddStringToObject(pstJsonObject, "Device Name", 
-                    (*pstCurrentNode)->Name);
+                    (*pstCurrentNode)->cName);
                 cJSON_AddNumberToObject(pstJsonObject, "Device State", 
-                    (*pstCurrentNode)->lState);
+                    (*pstCurrentNode)->unState);
                 cJSON_AddItemToArray(pstJsonArray, pstJsonObject);
 
                 pcJsonString = cJSON_Print(pstJsonArray);
@@ -246,6 +245,7 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
             printf("Null Check failed\n");
             break;
         }
+
     }while(1);
 
     return blCheck;
@@ -253,7 +253,7 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
 
 //*************************.deviceManagerDelete.********************************
 // Purpose : Function to Delete a Device from list
-// Inputs  : ppstHead - Points to the head node
+// Inputs  : ppstHead - Pointer to the head node
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -261,15 +261,15 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
 //******************************************************************************
 bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
 {
-    int32 lSearchDevice = 0;
+    uint32 ulSearchDevice = 0;
     bool blCheck = false;
     cJSON *pstJsonObject = NULL;
     cJSON *pstJsonArray = NULL;
     cJSON *pstDeviceDetails = NULL;
-    int32 lIterator = 0;
+    uint32 ulIterator = 0;
 
     printf("Enter The Device ID to Remove: ");
-    scanf("%ld", &lSearchDevice);
+    scanf("%ld", &ulSearchDevice);
     
     if (NULL != ppstHead)
     {
@@ -284,24 +284,24 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
 
             if (true == cJSON_IsArray(pstJsonArray))
             {
-                for (lIterator = 0; 
-                        lIterator < cJSON_GetArraySize(pstJsonArray);
-                        lIterator ++)
+                for (ulIterator = 0; 
+                        ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
+                        ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, lIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
                     pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
                             pstJsonObject, "Device ID");
 
                     if((true == cJSON_IsNumber(pstDeviceDetails)) && 
-                            (pstDeviceDetails->valueint == lSearchDevice))
+                        ((uint32)pstDeviceDetails->valueint == ulSearchDevice))
                     {
-                        cJSON_DeleteItemFromArray(pstJsonArray, lIterator);
+                        cJSON_DeleteItemFromArray(pstJsonArray, ulIterator);
                         printf("\n\tDEVICE REMOVED\n");
                         blCheck = true;
                     }
                 }
 
-                if ((lIterator == cJSON_GetArraySize(pstJsonArray)) && 
+                if ((ulIterator == (uint32)cJSON_GetArraySize(pstJsonArray)) && 
                                         (true != blCheck))
                 {
                     printf("\n\tDEVICE NOT FOUND\n");
@@ -335,7 +335,7 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
 
 //**************************.deviceManagerSearch.*******************************
 // Purpose : Function to Search a Device from the list
-// Inputs  : ppstHead - Points to the head node
+// Inputs  : ppstHead - Pointer to the head node
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -343,16 +343,15 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
 //******************************************************************************
 bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
 {
-    int32 lSearchDevice = 0;
+    uint32 ulSearchDevice = 0;
     bool blCheck = false;
-
     cJSON *pstJsonObject = NULL;
     cJSON *pstJsonArray = NULL;
     cJSON *pstDeviceDetails = NULL;
-    int32 lIterator = 0;
+    uint32 ulIterator = 0;
 
     printf("Enter The Device ID to search: ");
-    scanf("%ld", &lSearchDevice);
+    scanf("%ld", &ulSearchDevice);
 
     if (NULL != ppstHead)
     {
@@ -367,16 +366,16 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
 
             if (true == cJSON_IsArray(pstJsonArray))
             {
-                for (lIterator = 0; 
-                        lIterator < cJSON_GetArraySize(pstJsonArray);
-                        lIterator ++)
+                for (ulIterator = 0; 
+                        ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
+                        ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, lIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
                     pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
                             pstJsonObject, "Device ID");
 
                     if((true == cJSON_IsNumber(pstDeviceDetails)) && 
-                            (pstDeviceDetails->valueint == lSearchDevice))
+                        ((uint32)pstDeviceDetails->valueint == ulSearchDevice))
                     {
                         printf("\tDEVICE FOUND\n");
 
@@ -394,7 +393,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
                     }
                 }
 
-                if ((lIterator == cJSON_GetArraySize(pstJsonArray)) && 
+                if ((ulIterator == (uint32)cJSON_GetArraySize(pstJsonArray)) && 
                             (true != blCheck))
                 {
                     cJSON_Delete(pstJsonArray);
@@ -412,6 +411,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
             printf("Invalid file format\n");
 
             break;
+
         }while (1);
     }
     else
@@ -424,7 +424,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
 
 //**************************.deviceManagerDisplay.******************************
 // Purpose : Function to Display all Devices
-// Inputs  : ppstHead - Points to the head node
+// Inputs  : ppstHead - Pointer to the head node
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -436,7 +436,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
     cJSON *pstJsonObject = NULL;
     cJSON *pstJsonArray = NULL;
     cJSON *pstDeviceDetails = NULL;
-    int32 lIterator = 0;
+    uint32 ulIterator = 0;
 
     if (NULL != ppstHead)
     {
@@ -451,13 +451,13 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
 
             if (true == cJSON_IsArray(pstJsonArray))
             {
-                for (lIterator = 0; 
-                        lIterator < cJSON_GetArraySize(pstJsonArray);
-                        lIterator ++)
+                for (ulIterator = 0; 
+                        ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
+                        ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, lIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
 
-                    printf("\n\tDEVICE: %ld\n", lIterator + 1);
+                    printf("\n\tDEVICE: %ld\n", ulIterator + 1);
                     
                     if (true == deviceManagerJsonPrint(&pstJsonObject, 
                                                         &pstDeviceDetails))
@@ -493,7 +493,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
 
 //**************************.deviceManagerFree.*********************************
 // Purpose : Function that frees up memory
-// Inputs  : ppstHead - Points to the head node
+// Inputs  : ppstHead - Pointer to the head node
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -525,7 +525,7 @@ static bool deviceManagerFree(DEVICE_MANAGER **ppstHead)
 
 //**************************.deviceManagerJsonRead.*****************************
 // Purpose : Function to Read a Json file
-// Inputs  : pstJsonArray - Points to the Object array inside Json file
+// Inputs  : pstJsonArray - Pointer to the Object array inside Json file
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -534,13 +534,13 @@ static bool deviceManagerFree(DEVICE_MANAGER **ppstHead)
 static bool deviceManagerJsonRead(cJSON **pstJsonArray)
 {
     bool blCheck = false;
-    int32 lFileSize = 0;
+    uint32 ulFileSize = 0;
     int8 *pcFileData = NULL;
     FILE *pstFilePointer = NULL;
-    int8 *pcFileName = "device.json";
-    int8 *cMode = "r";
-    int32 lOffset = 0;
-    int32 lPosition = 0;
+    int8 *pcFileName = FILE_NAME;
+    int8 *cMode = READ_MODE;
+    uint32 ulOffset = 0;
+    uint32 ulPosition = 0;
 
     do
     {
@@ -555,28 +555,28 @@ static bool deviceManagerJsonRead(cJSON **pstJsonArray)
                     break;
                 }
 
-                lPosition = SEEK_END;
+                ulPosition = SEEK_END;
 
-                if (true != fileOperationGetSize(&pstFilePointer, lOffset, 
-                                            lPosition, &lFileSize))
+                if (true != fileOperationGetSize(&pstFilePointer, ulOffset, 
+                                            ulPosition, &ulFileSize))
                 {
                     printf("File size could not be determined\n");
 
                     break;
                 }
 
-                pcFileData = malloc(lFileSize + 1);
+                pcFileData = malloc(ulFileSize + 1);
 
                 if (NULL != pcFileData)
                 {
                     if (true != fileOperationRead(pcFileData, 1, 
-                                lFileSize, &pstFilePointer))
+                                ulFileSize, &pstFilePointer))
                     {
                         printf("File Cannot be Read\n");
 
                         break;
                     }
-                    pcFileData[lFileSize] = '\0';
+                    pcFileData[ulFileSize] = '\0';
                     *pstJsonArray = cJSON_Parse(pcFileData);
                     free(pcFileData);
                     blCheck = true;
@@ -611,6 +611,7 @@ static bool deviceManagerJsonRead(cJSON **pstJsonArray)
         }
 
         break;
+
     } while (1);
     
     
@@ -619,7 +620,7 @@ static bool deviceManagerJsonRead(cJSON **pstJsonArray)
 
 //**************************.deviceManagerJsonWrite.****************************
 // Purpose : Function to Write into a json File
-// Inputs  : pstJsonArray - Points to the Object array inside Json file
+// Inputs  : pstJsonArray - Pointer to the Object array inside Json file
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
 //           during function execution
@@ -630,8 +631,8 @@ static bool deviceManagerJsonWrite(cJSON **pstJsonArray)
     bool blCheck = false;
     FILE *pstFilePointer = NULL;
     int8 *pcJsonString = NULL;
-    int8 *pcFileName = "device.json";
-    int8 *cMode = "w";
+    int8 *pcFileName = FILE_NAME;
+    int8 *cMode = WRITE_MODE;
 
     if (NULL != pstJsonArray)
     {
@@ -683,8 +684,8 @@ static bool deviceManagerJsonWrite(cJSON **pstJsonArray)
 
 //************************.deviceManagerJsonPrint.******************************
 // Purpose : Function to Add a Device to list
-// Inputs  : pstJsonArray - Points to the Object which contain device details
-//           pstDeviceDetails - Points to the specific device information 
+// Inputs  : pstJsonArray - Pointer to the Object which contain device details
+//           pstDeviceDetails - Pointer to the specific device information 
 //           that need to be printed
 // Outputs : None
 // Return  : true if there are no errors and false if any errors exist
@@ -695,7 +696,7 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
                             cJSON **pstDeviceDetails)
 {
     bool blCheck = false;
-    int16 nCount = 0;
+    uint16 unCount = 0;
     const int8 *pcState[MAX_MENU_COUNT] = {"Online", "Charging", 
                                          "Disabled", "Offline"};
 
@@ -708,7 +709,7 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
         if (true == cJSON_IsNumber(*pstDeviceDetails))
         {
             printf("Device ID:\t%d\n", (*pstDeviceDetails)->valueint);
-            nCount ++;
+            unCount ++;
         }
         
 
@@ -718,7 +719,7 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
         if (true == cJSON_IsNumber(*pstDeviceDetails))
         {
             printf("Vendor ID:\t%d\n", (*pstDeviceDetails)->valueint);
-            nCount ++;
+            unCount ++;
         }
 
         *pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
@@ -728,7 +729,7 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
                     (NULL != (*pstDeviceDetails)->valuestring))
         {
             printf("Device Name:\t%s\n", (*pstDeviceDetails)->valuestring);
-            nCount ++;
+            unCount ++;
         }
 
         *pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
@@ -738,10 +739,10 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
         {
             printf("Device State:\t%s\n", 
                         pcState[(*pstDeviceDetails)->valueint]);
-            nCount ++;
+            unCount ++;
         }
 
-        if(MAX_MENU_COUNT == nCount)
+        if(MAX_MENU_COUNT == unCount)
         {
             blCheck = true;
         }
@@ -755,20 +756,21 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
 }
 
 //**************************.deviceManagerSelect.*******************************
-// Purpose : Function that lets the user select the option to be executed 
-// Inputs  : stDevice - Points to the Menu 
+// Purpose : Function that lets the user select which option from the menu to 
+//           execute (add, delete, search,display)
+// Inputs  : stDevice - Pointer to the Menu 
 // Outputs : None
 // Return  : blCheck - true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
-bool deviceManagerSelect( MENU *stDevice)
+bool deviceManagerSelect( DEVICE_MENU *stDevice)
 {
     bool blCheck = false;
     DEVICE_MANAGER *pstHead = NULL;
-    int16 nChoice = 0;
-    int8 cProceed = 'y';
-    int16 nIterator = 0;
+    uint16 unChoice = 0;
+    uint8 cProceed = 'y';
+    uint16 unIterator = 0;
 
     printf("\n**************MAIN MENU*************\n");
 
@@ -776,29 +778,36 @@ bool deviceManagerSelect( MENU *stDevice)
     {
         printf("\t\tENTER\n");
 
-        // prints the menu
-        for(nIterator = 0; nIterator < MAX_MENU_COUNT; nIterator ++)
+        if (NULL == stDevice)
         {
-            printf("\t%hd  %s\n", nIterator, stDevice[nIterator].Menu);
+            printf("Menu could not be displayed\n");
+
+            break;
+        }
+
+        // prints the menu
+        for(unIterator = 0; unIterator < MAX_MENU_COUNT; unIterator ++)
+        {
+            printf("\t%hd  %s\n", unIterator, stDevice[unIterator].Menu);
         }
 
         printf("*************************************\n\n");
-        scanf("%hd", &nChoice);
+        scanf("%hd", &unChoice);
 
-        if (0 == nChoice)
+        if (0 == unChoice)
         {
             pstHead = NULL;
         }
 
-        if((0 <= nChoice) && (MAX_MENU_COUNT > nChoice))
+        if(MAX_MENU_COUNT > unChoice)
         {
-            if(true != stDevice[nChoice].pManager(&pstHead))
+            if(true != stDevice[unChoice].pManager(&pstHead))
             {
                 printf("Error Found during execution\n");
                 
             }
 
-            if (0 == nChoice)
+            if (0 == unChoice)
             {
                 deviceManagerFree(&pstHead);
             }

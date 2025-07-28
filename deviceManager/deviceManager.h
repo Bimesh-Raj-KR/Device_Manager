@@ -3,8 +3,8 @@
 // All Rights Reserved 
 //******************************************************************************
 //
-// Summary : Contain all type definitions, global constants that defines number 
-//           of arithmetic operations and forward declarations required for 
+// Summary : Contain all type definitions, global constants and forward 
+//           declarations required for device management in 
 //           deviceManager.c functions
 // Note    : None
 // 
@@ -17,29 +17,32 @@
 #include "fileOperations.h"
 
 //******************************* Global Types *********************************
-// Defines Memory declarations
-typedef short int16;
+// Defines the variable declaration
+typedef unsigned char uint8;
 
 //Defines the linked List
 typedef struct DEVICE_MANAGER
 {
-    int32 lDeviceId;
-    int32 lVendorId;
-    int8 Name[MAX_NAME_SIZE];
-    int32 lState;
+    uint32 ulDeviceId;
+    uint32 ulVendorId;
+    int8 cName[MAX_NAME_SIZE];
+    uint16 unState;
     struct DEVICE_MANAGER *pstNext;
 }DEVICE_MANAGER;
 
 //Defines the menu and Function pointer
-typedef struct _MENU_
+typedef struct DEVICE_MENU_
 {
     const int8 Menu[MAX_MENU_SIZE];
     bool (*pManager)(DEVICE_MANAGER**);
-}MENU;
+}DEVICE_MENU;
 
 //***************************** Global Constants *******************************
 #define DIVISION_OPERATION      (3)
 #define MAX_MENU_COUNT          (4)
+#define FILE_NAME               ("device.json")
+#define WRITE_MODE              ("w")
+#define NULL_CHARACTER          ('\0')
 
 //***************************** Global Variables *******************************
 
@@ -48,7 +51,7 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead);
 bool deviceManagerDelete(DEVICE_MANAGER **ppstHead);
 bool deviceManagerSearch(DEVICE_MANAGER **ppstHead);
 bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead);
-bool deviceManagerSelect( MENU *stDevice);
+bool deviceManagerSelect( DEVICE_MENU *stDevice);
 
 //*********************** Inline Method Implementations ************************ 
 

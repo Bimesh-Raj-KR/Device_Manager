@@ -2,8 +2,8 @@
 // Copyright (c) 2025 Trenser Technology Solutions
 // All Rights Reserved
 //******************************************************************************
-// File    : Device_manager.c
-// Summary : Contains all File operations needed for code execution
+// File    : fileOperations.c
+// Summary : Contains all File operations needed for managing devices
 // Note    : None
 // Author  : Bimesh Raj K R
 // Date    : 23/Jul/2025
@@ -22,11 +22,11 @@
 
 //**************************.fileOperationOpen.*********************************
 // Purpose : Function to Open a File
-// Inputs  : **ppstFilePointer - a pointer to the file to be opened
-//           *cFileName - Contains the name of the file
-//           *cMode - Contains the file access mode
+// Inputs  : ppstFilePointer - Pointer to the file to be opened
+//           cFileName - Contains the name of the file
+//           pcMode - Pointer to the file access mode
 // Outputs : None
-// Return  : blCheck - true if there are no errors and false if any errors exist
+// Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
@@ -44,7 +44,7 @@ bool fileOperationOpen(FILE **ppstFilePointer, int8 *cFileName, int8 *pcMode)
         }
         else
         {
-            if(0 != strcmp("r",pcMode))
+            if(0 != strcmp(READ_MODE, pcMode))
             {
                 printf("File cannot be opened\n");
             }
@@ -60,9 +60,9 @@ bool fileOperationOpen(FILE **ppstFilePointer, int8 *cFileName, int8 *pcMode)
 
 //**************************.fileOperationClose.********************************
 // Purpose : Function to Close a File
-// Inputs  : **ppstFilePointer - a pointer to the file to be closed
+// Inputs  : ppstFilePointer - Pointer to the file to be closed
 // Outputs : None
-// Return  : blCheck - true if there are no errors and false if any errors exist
+// Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
@@ -92,18 +92,19 @@ bool fileOperationClose(FILE **ppstFilePointer)
 
 //************************.fileOperationGetSize.********************************
 // Purpose : Function to Get the size of a File
-// Inputs  : **ppstFilePointer - a pointer to the file to be opened
-//           lOffset - Contains the offset value
-//           cPosition - Starting point for the offset
+// Inputs  : ppstFilePointer - Pointer to the file to be opened
+//           ulOffset - Contains the number of bytes the file pointer needs 
+//           to be moved
+//           ulPosition - Starting point for the offset
+//           pulFileSize - Pointer to the position of the File pointer with 
+//           respect to starting of the file
 // Outputs : None
-// Return  : blCheck - true if there are no errors and false if any errors exist
+// Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
-bool fileOperationGetSize(FILE **ppstFilePointer, 
-                          int32 lOffset, 
-                          int32 lPosition,
-                          int32 *plFileSize)
+bool fileOperationGetSize(FILE **ppstFilePointer, uint32 ulOffset, 
+                          uint32 ulPosition, uint32 *pulFileSize)
 {
     bool blCheck = false;
 
@@ -111,11 +112,11 @@ bool fileOperationGetSize(FILE **ppstFilePointer,
     {
         if (NULL != *ppstFilePointer)
         {
-            if (0 == fseek(*ppstFilePointer, lOffset, lPosition))
+            if (0 == fseek(*ppstFilePointer, ulOffset, ulPosition))
             {
-                *plFileSize = ftell(*ppstFilePointer);
+                *pulFileSize = ftell(*ppstFilePointer);
 
-                if(-1L != *plFileSize)
+                if(-1UL != *pulFileSize)
                 {
                     rewind(*ppstFilePointer);
                     blCheck = true;
@@ -146,22 +147,20 @@ bool fileOperationGetSize(FILE **ppstFilePointer,
 
 //**************************.fileOperationRead.*********************************
 // Purpose : Function to read a File
-// Inputs  : **ppstFilePointer - a pointer to the file to be opened
-//           lByteSize - Size of an element inside file in bytes
-//           lFileSize - Number of elements inside file
-//           *pcFileData - Points to the location to store data
+// Inputs  : ppstFilePointer - Pointer to the file to be opened
+//           ulByteSize - Size of an element inside file in bytes
+//           ulFileSize - Number of elements inside file
+//           pcFileData - Pointer to the location to store data
 // Outputs : None
-// Return  : blCheck - true if there are no errors and false if any errors exist
+// Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
-bool fileOperationRead(int8 *pcFileData,
-                       int32 lByteSize,
-                       int32 lFileSize,
-                       FILE **ppstFilePointer)
+bool fileOperationRead(int8 *pcFileData, uint32 ulByteSize,
+                       uint32 ulFileSize, FILE **ppstFilePointer)
 {
     bool blCheck = false;
-    int32 lReadSize = 0;
+    uint32 lReadSize = 0;
 
     if (NULL != ppstFilePointer)
     {
@@ -169,10 +168,10 @@ bool fileOperationRead(int8 *pcFileData,
         {
             if (NULL != *ppstFilePointer)
             {
-                lReadSize = fread(pcFileData, lByteSize, lFileSize, 
+                lReadSize = fread(pcFileData, ulByteSize, ulFileSize, 
                     *ppstFilePointer);
 
-                if (lReadSize == lFileSize)
+                if (lReadSize == ulFileSize)
                 {
                     blCheck = true;
                 }
@@ -201,10 +200,10 @@ bool fileOperationRead(int8 *pcFileData,
 
 //**************************.fileOperationWrite.********************************
 // Purpose : Function to write a string to a File
-// Inputs  : **ppstFilePointer - a pointer to the file to be opened
-//           *cString - points to the string to be put in the file
+// Inputs  : ppstFilePointer - Pointer to the file to be opened
+//           cString - Pointer to the string to be put in the file
 // Outputs : None
-// Return  : blCheck - true if there are no errors and false if any errors exist
+// Return  : true if there are no errors and false if any errors exist
 //           during function execution
 // Notes   : None
 //******************************************************************************
@@ -245,3 +244,5 @@ bool fileOperationWrite(int8 *cString,
 
     return blCheck;
 }
+
+//EOF

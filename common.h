@@ -19,12 +19,14 @@
 #include <string.h>
 
 //******************************* Global Types *********************************
-typedef long int32;
+typedef unsigned long uint32;
+typedef unsigned short uint16;
 typedef char int8;
 
 //***************************** Global Constants *******************************
 #define MAX_NAME_SIZE   (10)
 #define MAX_MENU_SIZE   (20)
+#define READ_MODE       ("r")
 
 //***************************** Global Variables *******************************
 

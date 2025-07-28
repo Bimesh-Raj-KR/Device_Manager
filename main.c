@@ -2,7 +2,7 @@
 // Copyright (c) 2025 Trenser Technology Solutions
 // All Rights Reserved
 //******************************************************************************
-// File    : calculator.c
+// File    : main.c
 // Summary : Manages different devices. Add, delete, search and display devices 
 //           using a json file and linked list
 // Note    : None
@@ -22,7 +22,7 @@
 //***************************** Local Functions ********************************
 
 //***********************************.main.*************************************
-// Purpose : Function to Manage devices
+// Purpose : Function to Manage device operations
 // Inputs  : None
 // Outputs : None
 // Return  : 0
@@ -30,7 +30,7 @@
 //******************************************************************************
 int main()
 {
-    MENU stDevice[MAX_MENU_COUNT] = 
+    DEVICE_MENU stDevice[MAX_MENU_COUNT] = 
     {
         {"Add Device", deviceManagerAdd},
         {"Delete Device", deviceManagerDelete},
@@ -45,3 +45,5 @@ int main()
 
     return 0;
 }
+
+//EOF
