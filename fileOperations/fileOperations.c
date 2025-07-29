@@ -46,13 +46,13 @@ bool fileOperationOpen(FILE **ppstFilePointer, int8 *cFileName, int8 *pcMode)
         {
             if(0 != strcmp(READ_MODE, pcMode))
             {
-                printf("File cannot be opened\n");
+                printf("\tFile cannot be opened\n");
             }
         }
     }
     else
     {
-        printf("Null check failed\n");
+        printf("\tNull check failed\n");
     }
 
     return blCheck;
@@ -79,12 +79,12 @@ bool fileOperationClose(FILE **ppstFilePointer)
         }
         else
         {
-            printf("File cannot be closed\n");
+            printf("\tFile cannot be closed\n");
         }
     }
     else
     {
-        printf("Null check failed\n");
+        printf("\tNull check failed\n");
     }
 
     return blCheck;
@@ -123,23 +123,23 @@ bool fileOperationGetSize(FILE **ppstFilePointer, uint32 ulOffset,
                 }
                 else
                 {
-                    printf("ftell failed\n");
+                    printf("\tftell failed\n");
                 }
 
             }
             else
             {
-                printf("fseek failed\n");
+                printf("\tfseek failed\n");
             }
         }
         else
         {
-            printf("File pointer points to Null\n");
+            printf("\tFile pointer points to Null\n");
         }
     }
     else
     {
-        printf("Null check failed\n");
+        printf("\tNull check failed\n");
     }
 
     return blCheck;
@@ -177,22 +177,22 @@ bool fileOperationRead(int8 *pcFileData, uint32 ulByteSize,
                 }
                 else
                 {
-                    printf("fread failed\n");
+                    printf("\tfread failed\n");
                 }
             }
             else
             {
-                printf("File pointer points to Null\n");
+                printf("\tFile pointer points to Null\n");
             }
         }
         else
         {
-            printf("Data could not be found\n");
+            printf("\tData could not be found\n");
         }
     }
     else
     {
-        printf("Null check failed\n");
+        printf("\tNull check failed\n");
     }
 
     return blCheck;
@@ -224,24 +224,24 @@ bool fileOperationWrite(int8 *cString,
                 }
                 else
                 {
-                    printf("fputs failed\n");
+                    printf("\tfputs failed\n");
                 }
             }
             else
             {
-                printf("File pointer points to Null\n");
+                printf("\tFile pointer points to Null\n");
             }
 
             cJSON_free(cString);
         }
         else
         {
-            printf("Data could not be found\n");
+            printf("\tData could not be found\n");
         }
     }
     else
     {
-        printf("Null check failed\n");
+        printf("\tNull check failed\n");
     }
 
     return blCheck;

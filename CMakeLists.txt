@@ -1,7 +1,7 @@
 
 # Generate linux executable
 cmake_minimum_required(VERSION 3.10)
-project(GccBuild C)
+project(DeviceBuild C)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/
@@ -12,6 +12,7 @@ include_directories(
 # In device directory
 add_executable(device_gcc
     ${CMAKE_SOURCE_DIR}/main.c
+    ${CMAKE_SOURCE_DIR}/memoryManager.c
     ${CMAKE_SOURCE_DIR}/fileOperations/fileOperations.c
     ${CMAKE_SOURCE_DIR}/deviceManager/deviceManager.c
     ${CMAKE_SOURCE_DIR}/cJSON/cJSON.c)
@@ -24,7 +25,8 @@ set_target_properties(device_gcc PROPERTIES
 
 # In debug directory for debugging
 add_executable(device_debug
-   ${CMAKE_SOURCE_DIR}/main.c
+    ${CMAKE_SOURCE_DIR}/main.c
+    ${CMAKE_SOURCE_DIR}/memoryManager.c
     ${CMAKE_SOURCE_DIR}/fileOperations/fileOperations.c
     ${CMAKE_SOURCE_DIR}/deviceManager/deviceManager.c
     ${CMAKE_SOURCE_DIR}/cJSON/cJSON.c)

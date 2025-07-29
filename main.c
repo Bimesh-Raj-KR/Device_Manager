@@ -35,12 +35,13 @@ int main()
         {"Add Device", deviceManagerAdd},
         {"Delete Device", deviceManagerDelete},
         {"Search Device", deviceManagerSearch},
-        {"Display all device", deviceManagerDisplay}
+        {"Display all device", deviceManagerDisplay},
+        {"Exit", NULL}
     };
 
     if (true != deviceManagerSelect(stDevice))
     {
-        printf("Choice Outside Range or Error Found\n");
+        printf("\tChoice Outside Range or Error Found\n");
     }
 
     return 0;

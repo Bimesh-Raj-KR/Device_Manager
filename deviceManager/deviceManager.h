@@ -39,7 +39,9 @@ typedef struct DEVICE_MENU_
 
 //***************************** Global Constants *******************************
 #define DIVISION_OPERATION      (3)
-#define MAX_MENU_COUNT          (4)
+#define EXIT_CHOICE             (4)
+#define MAX_STATE_COUNT         (4)
+#define MAX_MENU_COUNT          (5)
 #define FILE_NAME               ("device.json")
 #define WRITE_MODE              ("w")
 #define NULL_CHARACTER          ('\0')

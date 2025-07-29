@@ -1,38 +1,30 @@
-//********************************* Device manager *****************************
+//********************************* Device Manager *****************************
 // Copyright (c) 2025 Trenser Technology Solutions
 // All Rights Reserved 
 //******************************************************************************
 //
-// Summary : Contains type definitions and global constant that defines array 
-//           size of device Name and device details
+// Summary : Contain all forward declarations required for device management in 
+//           memoryManager.c functions
 // Note    : None
 // 
 //******************************************************************************
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef MEMORY_MANAGER_H
+#define MEMORY_MANAGER_H
 
 //******************************* Include Files ********************************
-#include <stdio.h>
-#include <cJSON.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
+#include "common.h"
 
 //******************************* Global Types *********************************
-typedef unsigned long uint32;
-typedef unsigned short uint16;
-typedef char int8;
 
 //***************************** Global Constants *******************************
-#define MAX_NAME_SIZE   (50)
-#define MAX_MENU_SIZE   (20)
-#define READ_MODE       ("r")
 
 //***************************** Global Variables *******************************
 
-//**************************** Forward Declarations **************************** 
+//**************************** Forward Declarations ****************************
+bool memoryManagerAllocate(void **pMemory, uint32 ulSize);
+bool memoryManagerFree(void **pMemory);
 
 //*********************** Inline Method Implementations ************************ 
 
-#endif // COMMON_H
+#endif // MEMORY_MANAGER_H
 // EOF 

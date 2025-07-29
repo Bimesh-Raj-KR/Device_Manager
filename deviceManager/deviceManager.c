@@ -12,7 +12,7 @@
 
 //****************************** Include Files *********************************
 #include "deviceManager.h"
-
+#include "memoryManager.h"
 //******************************* Local Types **********************************
 
 //***************************** Local Constants ********************************
@@ -39,40 +39,79 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
 bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 {
     bool blCheck = false;
-    uint8 ucChoice = 'y';
+    uint16 unChoice = 0;
     uint16 unIterator = 0;
+    uint16 unFlag = 0;
     DEVICE_MANAGER *pstCurrentNode = NULL;
     DEVICE_MANAGER *pstNewNode = NULL;
-    const int8 *pcState[MAX_MENU_COUNT] = {"Online", "Charging", 
+    const int8 *pcState[MAX_STATE_COUNT] = {"Online", "Charging", 
                                          "Disabled", "Offline"};
 
-    while (ucChoice == 'y')
+    while (0 == unChoice)
     {
-        pstNewNode = malloc(sizeof(DEVICE_MANAGER));
-
         pstCurrentNode = *ppstHead;
 
-        if (NULL != pstNewNode)
+        if (true == memoryManagerAllocate((void **)&pstNewNode, 
+                                           sizeof(DEVICE_MANAGER)))
         {
             printf("\nEnter Device Id: ");
-            scanf("%ld", &pstNewNode->ulDeviceId);
+
+            if (1 != scanf("%ld", &pstNewNode->ulDeviceId))
+            {
+                printf("\tINVALID DEVICE ID\n");
+                unFlag = 1;
+
+                break;
+            }
+
+            while ('\n' != getchar());
+
             printf("\nEnter Vendor Id: ");
-            scanf("%ld", &pstNewNode->ulVendorId);
+
+            if (1 != scanf("%ld", &pstNewNode->ulVendorId))
+            {
+                printf("\tINVALID VENDOR ID\n");
+                unFlag = 1;
+
+                break;
+            }
+
+            while ('\n' != getchar());
+
             printf("\nEnter Device Name: ");
             scanf("%s", pstNewNode->cName);
+
+            while ('\n' != getchar());
+
             printf("\n**********DEVICE STATE**********\n");
-            for (unIterator = 0; unIterator < MAX_MENU_COUNT; unIterator ++)
+
+            for (unIterator = 0; unIterator < MAX_STATE_COUNT; unIterator ++)
             {
                 printf("\t%s = %hd\n", pcState[unIterator], unIterator);
             }
+
             printf("*********************************\n\n");
             printf("\nEnter Device State: ");
-            scanf("%hd", &pstNewNode->unState);
 
-            if (MAX_MENU_COUNT <= pstNewNode->unState)
+            if (1 != scanf("%hd", &pstNewNode->unState))
             {
-                printf("\n\tINVALID DEVICE STATE\n");
-                free(pstNewNode);
+                printf("\tINVALID DEVICE STATE\n");
+                unFlag = 1;
+
+                break;
+            }
+
+            while ('\n' != getchar());
+
+            if (MAX_STATE_COUNT <= pstNewNode->unState)
+            {
+                printf("\n\tDEVICE STATE OUTSIDE RANGE\n");
+
+                if (true != memoryManagerFree((void **)&pstNewNode))
+                {
+                    printf("\tFailed to release memory\n");
+                }
+
                 pstNewNode = NULL;
 
                 break;
@@ -80,7 +119,7 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 
             pstNewNode->pstNext = NULL;
 
-            if(NULL == *ppstHead)
+            if (NULL == *ppstHead)
             {
                 *ppstHead = pstNewNode;
             }
@@ -98,7 +137,7 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
 
             if (true != deviceManagerJson(&pstNewNode))
             {
-                printf("Cannot Add Device info to json file\n");
+                printf("\tCannot Add Device info to json file\n");
 
                 break;
             }
@@ -107,22 +146,37 @@ bool deviceManagerAdd(DEVICE_MANAGER **ppstHead)
         }
         else
         {   
-            printf("Memory Allocation Failed\n");
+            printf("\tMemory Allocation Failed\n");
 
             break;
         }
 
         printf("\n***************ADD MENU*************\n");
-        printf("\tPress 'y' to Continue\n\tPress 'n' to Stop\n");
+        printf("\tPress 0 to Continue\n\tPress 1 to Stop\n");
         printf("*************************************\n\n");
 
-        while(getchar() != '\n');
-
-        scanf("%c", &ucChoice);
-
-        if (('y' != ucChoice) && ('n' != ucChoice))
+        if (1 != scanf("%hd", &unChoice))
         {
             printf("\tINVALID CHOICE\n");
+
+            while ('\n' != getchar());
+
+            break;
+        }
+
+        if ((0 != unChoice) && (1 != unChoice))
+        {
+            printf("\tCHOICE OUT OF RANGE\n");
+            
+            while ('\n' != getchar());
+        }
+    }
+
+    if (1 == unFlag)
+    {
+        if (true != memoryManagerFree((void **)&pstNewNode))
+        {
+            printf("\tFailed to release memory\n");
         }
     }
 
@@ -159,19 +213,18 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
                 if (true != fileOperationGetSize(&pstFilePointer, 0, 
                                         SEEK_END, &ulFileSize))
                 {
-                    printf("File size could not be determined\n");
+                    printf("\tFile size could not be determined\n");
 
                     break;
                 }
 
-                pcFileData = malloc(ulFileSize + 1);
-
-                if(NULL != pcFileData)
+                if (true == memoryManagerAllocate((void **)&pcFileData, 
+                                                   ulFileSize + 1))
                 {
                     if (true != fileOperationRead(pcFileData, 1, 
                                 ulFileSize, &pstFilePointer))
                     {
-                        printf("File Cannot be Read\n");
+                        printf("\tFile Cannot be Read\n");
                         free(pcFileData);
 
                         break;
@@ -179,11 +232,17 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
 
                     pcFileData[ulFileSize] = NULL_CHARACTER;
                     pstJsonArray = cJSON_Parse(pcFileData);
-                    free(pcFileData);
+
+                    if (true != memoryManagerFree((void **)&pcFileData))
+                    {
+                        printf("\tFailed to release memory\n");
+
+                        break;
+                    }
                 }
                 else
                 {
-                    printf("Memory Allocation Failed");
+                    printf("\tMemory Allocation Failed");
                     fileOperationClose(&pstFilePointer);
 
                     break;
@@ -197,7 +256,9 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
-                    printf("Unable to close file\n");
+                    printf("\tUnable to close file\n");
+
+                    break;
                 }
             }
             else
@@ -227,14 +288,14 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
                 if (true != fileOperationWrite(pcJsonString, 
                                 &pstFilePointer))
                 {
-                    printf("Unable to write in file\n");
+                    printf("\tUnable to write in file\n");
 
                     break;
                 }
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
-                    printf("Unable to close file\n");
+                    printf("\tUnable to close file\n");
 
                     break;
                 }
@@ -245,13 +306,13 @@ static bool deviceManagerJson(DEVICE_MANAGER **pstCurrentNode)
             }
             else
             {
-                printf("Unable to open the file.\n");
+                printf("\tUnable to open the file.\n");
                 break;
             }
         }
         else
         {
-            printf("Null Check failed\n");
+            printf("\tNull Check failed\n");
             break;
         }
 
@@ -277,16 +338,24 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
     cJSON *pstDeviceDetails = NULL;
     uint32 ulIterator = 0;
 
-    printf("Enter The Device ID to Remove: ");
-    scanf("%ld", &ulSearchDevice);
-    
     if (NULL != ppstHead)
     {
         do
         {
+            printf("Enter The Device ID to Remove: ");
+
+            if (1 != scanf("%ld", &ulSearchDevice))
+            {
+                printf("\tINVALID DEVICE ID\n");
+
+                break;
+            }
+
+            while ('\n' != getchar());
+
             if (true != deviceManagerJsonRead(&pstJsonArray))
             {
-                printf("File doesn't exist\n");
+                printf("\tFile doesn't exist\n");
 
                 break;
             }
@@ -297,7 +366,8 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
                         ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
                         ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, 
+                                                       ulIterator);
                     pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
                             pstJsonObject, "Device ID");
 
@@ -314,11 +384,12 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
                                         (true != blCheck))
                 {
                     printf("\n\tDEVICE NOT FOUND\n");
+                    blCheck = true;
                 }
 
                 if (true != deviceManagerJsonWrite(&pstJsonArray))
                 {
-                    printf("Unable to write in the file\n");
+                    printf("\tUnable to write in the file\n");
 
                     blCheck = false;
 
@@ -328,7 +399,7 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
                 break;
             }
 
-            printf("Invalid file format\n");
+            printf("\tInvalid file format\n");
 
             break;
 
@@ -336,7 +407,7 @@ bool deviceManagerDelete(DEVICE_MANAGER **ppstHead)
     }
     else
     {
-        printf("Null Check failed\n");
+        printf("\tNull Check failed\n");
     }
 
     return blCheck;
@@ -359,16 +430,24 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
     cJSON *pstDeviceDetails = NULL;
     uint32 ulIterator = 0;
 
-    printf("Enter The Device ID to search: ");
-    scanf("%ld", &ulSearchDevice);
-
     if (NULL != ppstHead)
     {
         do
         {
+            printf("Enter The Device ID to search: ");
+
+            if (1 != scanf("%ld", &ulSearchDevice))
+            {
+                printf("\tINVALID DEVICE ID\n");
+
+                break;
+            }
+
+            while ('\n' != getchar());
+
             if (true != deviceManagerJsonRead(&pstJsonArray))
             {
-                printf("File doesn't exist\n");
+                printf("\tFile doesn't exist\n");
 
                 break;
             }
@@ -379,7 +458,8 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
                         ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
                         ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, 
+                                                       ulIterator);
                     pstDeviceDetails = cJSON_GetObjectItemCaseSensitive(
                             pstJsonObject, "Device ID");
 
@@ -395,7 +475,8 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
                         }
                         else
                         {
-                            printf("The Device Details could not be printed\n");
+                            printf("\tThe Device Details could not be"
+                                   "printed\n");
                         }
 
                         break;
@@ -408,6 +489,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
                     cJSON_Delete(pstJsonArray);
 
                     printf("\n\tDEVICE NOT FOUND\n");
+                    blCheck = true;
 
                     break;
                 }
@@ -417,7 +499,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
                 break;
             }
 
-            printf("Invalid file format\n");
+            printf("\tInvalid file format\n");
 
             break;
 
@@ -425,7 +507,7 @@ bool deviceManagerSearch(DEVICE_MANAGER **ppstHead)
     }
     else
     {
-        printf("Null Check failed\n");
+        printf("\tNull Check failed\n");
     }
 
     return blCheck;
@@ -453,7 +535,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
         {
             if (true != deviceManagerJsonRead(&pstJsonArray))
             {
-                printf("File doesn't exist\n");
+                printf("\tFile doesn't exist\n");
 
                 break;
             }
@@ -461,10 +543,11 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
             if (true == cJSON_IsArray(pstJsonArray))
             {
                 for (ulIterator = 0; 
-                        ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
-                        ulIterator ++)
+                    ulIterator < (uint32)cJSON_GetArraySize(pstJsonArray);
+                    ulIterator ++)
                 {
-                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, ulIterator);
+                    pstJsonObject = cJSON_GetArrayItem(pstJsonArray, 
+                                                       ulIterator);
 
                     printf("\n\tDEVICE: %ld\n", ulIterator + 1);
                     
@@ -475,7 +558,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
                     }
                     else
                     {
-                        printf("The Device Details could not be printed\n");
+                        printf("\tThe Device Details could not be printed\n");
 
                         break;
                     }
@@ -486,7 +569,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
             }
             else
             {
-                printf("Invalid file format\n");;
+                printf("\tInvalid file format\n");;
             }
 
             break;
@@ -495,7 +578,7 @@ bool deviceManagerDisplay(DEVICE_MANAGER **ppstHead)
     }
     else
     {
-        printf("Null Check failed\n");
+        printf("\tNull Check failed\n");
     }
     return blCheck;
 }
@@ -513,6 +596,7 @@ static bool deviceManagerFree(DEVICE_MANAGER **ppstHead)
     bool blCheck = false;
     DEVICE_MANAGER *pstCurrentNode = NULL;
     DEVICE_MANAGER *pstNext = NULL;
+    uint16 unFlag = 0;
 
     if ((NULL != ppstHead) && (NULL != *ppstHead))
     {
@@ -521,11 +605,22 @@ static bool deviceManagerFree(DEVICE_MANAGER **ppstHead)
         while (NULL != pstCurrentNode) 
         {
             pstNext = pstCurrentNode->pstNext;
-            free(pstCurrentNode);
+
+            if (true != memoryManagerFree((void **)&pstCurrentNode))
+            {
+                printf("\tFailed to release memory\n");
+                unFlag = 1;
+
+                break;
+            }
+
             pstCurrentNode = pstNext;
         }
 
-        blCheck = true;
+        if (0 == unFlag)
+        {
+            blCheck = true;
+        }
     }
     
 
@@ -559,7 +654,7 @@ static bool deviceManagerJsonRead(cJSON **pstJsonArray)
             {
                 if (NULL == pstFilePointer)
                 {
-                    printf("Null Check Failed\n");
+                    printf("\tNull Check Failed\n");
 
                     break;
                 }
@@ -569,54 +664,60 @@ static bool deviceManagerJsonRead(cJSON **pstJsonArray)
                 if (true != fileOperationGetSize(&pstFilePointer, ulOffset, 
                                             ulPosition, &ulFileSize))
                 {
-                    printf("File size could not be determined\n");
+                    printf("\tFile size could not be determined\n");
 
                     break;
                 }
 
-                pcFileData = malloc(ulFileSize + 1);
-
-                if (NULL != pcFileData)
+                if (true == memoryManagerAllocate((void **)&pcFileData, 
+                                                   ulFileSize + 1))
                 {
                     if (true != fileOperationRead(pcFileData, 1, 
                                 ulFileSize, &pstFilePointer))
                     {
-                        printf("File Cannot be Read\n");
+                        printf("\tFile Cannot be Read\n");
 
                         break;
                     }
                     pcFileData[ulFileSize] = '\0';
                     *pstJsonArray = cJSON_Parse(pcFileData);
-                    free(pcFileData);
+
+                    if (true != memoryManagerFree((void **)&pcFileData))
+                    {
+                        printf("\tFailed to release memory\n");
+
+                        break;
+                    }
+
                     blCheck = true;
                     
                 }
                 else
                 {
-                    printf("Memory Allocation Failed\n");
+                    printf("\tMemory Allocation Failed\n");
                 }
 
                 if (NULL == *pstJsonArray)
                 {
-                    printf("Unable to parse information\n");
+                    printf("\tUnable to parse information\n");
                     cJSON_Delete(*pstJsonArray);
                     blCheck = false;
                 }
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
-                    printf("Unable to close file\n");
+                    printf("\tUnable to close file\n");
                     blCheck = false;
                 }
             }
             else
             {
-                printf("Unable to Open File\n");
+                printf("\tUnable to Open File\n");
             }
         }
         else
         {
-            printf("Null Check Failed\n");
+            printf("\tNull Check Failed\n");
         }
 
         break;
@@ -649,7 +750,7 @@ static bool deviceManagerJsonWrite(cJSON **pstJsonArray)
         {
             if (NULL == *pstJsonArray)
             {
-                printf("Unable to parse information\n");
+                printf("\tUnable to parse information\n");
                 cJSON_Delete(*pstJsonArray);
 
                 break;
@@ -662,19 +763,18 @@ static bool deviceManagerJsonWrite(cJSON **pstJsonArray)
                 if (true == fileOperationWrite(pcJsonString, 
                                 &pstFilePointer))
                 {
-                    cJSON_free(pcJsonString);
                     blCheck = true;
                 }
                 else
                 {
-                    printf("Unable to write in file\n");
+                    printf("\tUnable to write in file\n");
                 }
 
                 cJSON_Delete(*pstJsonArray);
 
                 if (true != fileOperationClose(&pstFilePointer))
                 {
-                    printf("Unable to close file\n");
+                    printf("\tUnable to close file\n");
                     blCheck = false;
                 }
 
@@ -685,7 +785,7 @@ static bool deviceManagerJsonWrite(cJSON **pstJsonArray)
     }
     else
     {
-        printf("Null Check Failed\n");
+        printf("\tNull Check Failed\n");
     }
 
     return blCheck;
@@ -751,14 +851,14 @@ static bool deviceManagerJsonPrint(cJSON **pstJsonObject,
             unCount ++;
         }
 
-        if(MAX_MENU_COUNT == unCount)
+        if(MAX_MENU_COUNT - 1 == unCount)
         {
             blCheck = true;
         }
     }
     else
     {
-        printf("Null Check Failed\n");
+        printf("\tNull Check Failed\n");
     }
 
     return blCheck;
@@ -778,13 +878,11 @@ bool deviceManagerSelect( DEVICE_MENU *stDevice)
     bool blCheck = false;
     DEVICE_MANAGER *pstHead = NULL;
     uint16 unChoice = 0;
-    uint8 cProceed = 'y';
     uint16 unIterator = 0;
 
-    printf("\n**************MAIN MENU*************\n");
-
-    while ('y' == cProceed)
+    while (1)
     {
+        printf("\n**************MAIN MENU*************\n");
         printf("\t\tENTER\n");
 
         if (NULL == stDevice)
@@ -794,16 +892,29 @@ bool deviceManagerSelect( DEVICE_MENU *stDevice)
             break;
         }
 
-        // prints the menu
-        for(unIterator = 0; unIterator < MAX_MENU_COUNT; unIterator ++)
+        // Prints the menu
+        for (unIterator = 0; unIterator < MAX_MENU_COUNT; unIterator ++)
         {
             printf("\t%hd  %s\n", unIterator, stDevice[unIterator].Menu);
         }
 
         printf("*************************************\n\n");
-        scanf("%hd", &unChoice);
 
-        if (0 == unChoice)
+        if(1 != scanf("%hd", &unChoice))
+        {
+            printf("\tINVALID CHOICE\n");
+
+            break;
+        }
+
+        while('\n' != getchar());
+
+        if (EXIT_CHOICE == unChoice)//To exit Menu
+        {
+            break;
+        }
+
+        if (0 == unChoice)// For Making the Linked list
         {
             pstHead = NULL;
         }
@@ -812,8 +923,9 @@ bool deviceManagerSelect( DEVICE_MENU *stDevice)
         {
             if(true != stDevice[unChoice].pManager(&pstHead))
             {
-                printf("Error Found during execution\n");
-                
+                printf("\tError Found during execution\n");
+
+                break; 
             }
 
             if (0 == unChoice)
@@ -825,22 +937,6 @@ bool deviceManagerSelect( DEVICE_MENU *stDevice)
         else
         {
             printf("\tINVALID OPTION\n");
-        }
-
-        printf("\n**************MAIN MENU*************\n");
-        printf("\tPress 'y' to Continue\n\tPress 'n' to Stop\n");
-        printf("*************************************\n\n");
-        while(getchar() != '\n');
-        scanf("%c", &cProceed);
-
-        if ('y' == cProceed)
-        {
-            printf("\x1b[H\n\x1b[J");// Move Cursor to top-left and clear screen
-            printf("\n**************MAIN MENU*************\n");
-        }
-        if (('y' != cProceed) && ('n' != cProceed))
-        {
-            printf("\tINVALID CHOICE\n");
         }
     }    
 
